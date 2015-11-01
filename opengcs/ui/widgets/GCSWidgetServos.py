@@ -43,8 +43,6 @@ Only needs to affect servo values for a particulare vehicle, doesn't need any kn
 
 """
 
-
-
 class GCSWidgetServos (GCSWidget):
 
     widgetName = "Servos"
@@ -97,6 +95,7 @@ class GCSWidgetServos (GCSWidget):
        # self.refresh()
         #self.show()
 
+
     def refresh(self):
 
         super(GCSWidgetServos, self).refresh()
@@ -107,3 +106,15 @@ class GCSWidgetServos (GCSWidget):
         # set servo value
 
         print("Setting Servo: %d, to value: %d" % (servo, value))
+        w = self.geometry().width()
+        h = self.geometry().height()
+
+        self.label_altitude.move(5, h/2-10)
+        self.label_airspeed.move(w-25, h/2-10)
+        self.label_throttle.move(5, 20)
+        self.label_heading.move(w/2 - 10, 50)
+        self.label_climbrate.move(w-25,20)
+
+        self.setWindowTitle("GCSWidgetServos")
+        self.setMinimumSize(200, 200)
+
