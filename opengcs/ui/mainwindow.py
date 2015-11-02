@@ -8,6 +8,8 @@ from ui.widgets.GCSWidgetHUD import *
 from ui.widgets.GCSWidgetMap import *
 from ui.widgets.GCSWidgetMAVNetwork import *
 from ui.widgets.GCSWidgetParameterList import *
+from ui.widgets.GCSWidgetServos import *
+
 from PyQt4 import QtCore, QtGui
 import functools
 
