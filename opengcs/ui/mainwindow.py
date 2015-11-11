@@ -3,19 +3,31 @@
 # TODO: support screen ordering
 # TODO: fix disappearing toolbars for widgets
 
+# Notes
+#
+# The main window includes a menu, toolbar, statusbar, and a widget area. OpenGCS supports multiple "screens"
+# filled with widgets, and screens can be selected from the toolbar. The mainwindow class handles switching
+# between screens and displaying the appropriate widgets.
+#
+# The mainwindow class also takes responsibility for saving/restoring settings between sessions, using the
+# QSettings architecture. "Window settings" include data about window geometry and the various screens.
+# "Screen settings" include the details of a particular screen, including the settings for each widget
+# on that screen.
+#
+# The main window also takes responsibility for forwarding mavlink packets from the MAV network to the
+# appropriate widgets. It maintains a routing dictionary indicating which widgets are listening for
+# which system ids.
 
 from PyQt4.QtGui import *
 from dialogs import *
 from ui.widgets.GCSWidget import *
-#from ui.widgets.GCSWidgetHUD import *
-#from ui.widgets.GCSWidgetMap import *
-#from ui.widgets.GCSWidgetMAVNetwork import *
-#from ui.widgets.GCSWidgetParameterList import *
-#from ui.widgets.GCSWidgetPlot import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from gcs_state import *
+import shutil
 import functools
+import os.path
+from opengcs import *
 
 import gettext
 
@@ -24,7 +36,7 @@ class Screen:
     This class contains information for a "Screen." The main window can have multiple "screens", which can be
     selected from the toolbar
     """
-    def __init__(self, name='New Screen', iconfile='art/48x48/video-display-3.png', tooltip='', statustip='', order=0, uuid=None):
+    def __init__(self, name='New Screen', iconfile=gcsfile('art/48x48/toolbar_screen.png'), tooltip='', statustip='', order=0, uuid=None):
         if uuid:
             self.uuid = uuid
         else:
@@ -42,7 +54,12 @@ class MainWindow(QMainWindow):
         self.state = state
         self.screens = []
         self.toolbar = None
-        self.perspective = QSettings('ui/perspectives/autosave.ini', QSettings.IniFormat)
+
+        # Load autosave.ini, or create a new one based on default.ini
+        if not os.path.isfile(gcsfile('ui/perspectives/autosave.ini')):
+            shutil.copyfile(gcsfile('ui/perspectives/default.ini'), gcsfile('ui/perspectives/autosave.ini'))
+        self.perspective = QSettings(gcsfile('ui/perspectives/autosave.ini'), QSettings.IniFormat)
+
         self.load_widget_library()
         self.initUI()
         self.show()
@@ -59,7 +76,7 @@ class MainWindow(QMainWindow):
         """
         self.setGeometry(300, 300, 1000, 500)
         self.setWindowTitle(self.state.config.settings['windowtitle'])
-        self.setWindowIcon(QIcon(self.state.config.settings['windowicon']))
+        self.setWindowIcon(QIcon(gcsfile(self.state.config.settings['windowicon'])))
         self.active_screen = 0
         self.refresh()
 
@@ -73,7 +90,7 @@ class MainWindow(QMainWindow):
         """
         Display the widgets for the active screen.
         """
-        # Erase the current screen
+        # Erase all widgets on screen
         for w in self.children():
             if isinstance(w,QDockWidget):
                 self.removeDockWidget(w)
@@ -94,12 +111,12 @@ class MainWindow(QMainWindow):
         Create the PyQt actions used by the main window
         """
 
-        self.action_settings = QAction(QIcon('art/48x48/applications-system-4.png'), '&Settings', self)
+        self.action_settings = QAction(QIcon(gcsfile('art/48x48/toolbar_settings.png')), '&Settings', self)
         self.action_settings.setStatusTip('Open the settings menu')
         self.action_settings.setToolTip(('Settings'))
         self.action_settings.triggered.connect(self.on_action_settings)
 
-        self.action_connections = QAction(QIcon('art/48x48/network-globe.png'), '&Connections', self)
+        self.action_connections = QAction(QIcon('art/48x48/toolbar_connections.png'), '&Connections', self)
         self.action_connections.setStatusTip('Open connections dialog')
         self.action_connections.triggered.connect(self.on_action_connections)
 
@@ -135,7 +152,7 @@ class MainWindow(QMainWindow):
         self.actions_screens = []
         screen_number = 0
         for screen in self.screens:
-            action = QAction(QIcon(screen.iconfile), screen.name, self)
+            action = QAction(QIcon(gcsfile(screen.iconfile)), screen.name, self)
             action.setToolTip(screen.tooltip)
             action.setStatusTip(screen.statustip)
             action.triggered.connect(functools.partial(self.on_action_screen,screen_number))
@@ -157,6 +174,7 @@ class MainWindow(QMainWindow):
         self.toolbar = self.addToolBar('MainToolBar')
         self.toolbar.setObjectName("MainToolBar")
 
+        self.toolbar.addAction(self.action_add_widget)
         self.toolbar.addAction(self.action_settings)
         self.toolbar.addAction(self.action_connections)
 
@@ -192,9 +210,10 @@ class MainWindow(QMainWindow):
         """
         Create the menu used by the main window
         """
+        print('create_menu')
         self.menubar = QMenuBar(self)
         self.setMenuBar(self.menubar)
-        #self.menubar = self.menuBar()
+
         self.menu_file = self.menubar.addMenu('&File')
         self.menu_file.addAction(self.action_settings)
 
@@ -225,15 +244,23 @@ class MainWindow(QMainWindow):
 
 
     def on_action_settings(self):
+        '''
+        Launch the Settings dialog
+        '''
         print("TODO on_action_settings")
-        # TODO move FetchParameterHelp action to somewhere that makes sense
-        #self.state.fetch_parameter_help()
 
     def on_action_connections(self):
+        '''
+        Launch the Connections dialog
+        '''
         d = ConnectionsDialog(self.state)
         d.exec_()
 
     def on_action_screen(self, screen_number):
+        '''
+        Switch to the specified screen number
+        '''
+
         # Save the settings for the old screen before loading the new screen
         self.write_screen_settings()
 
@@ -250,12 +277,32 @@ class MainWindow(QMainWindow):
                 action_screen.setChecked(False)
 
     def on_action_save_perspective(self):
-        # TODO on_action_save_perspective
-        print("TODO onActionSavePerspective")
+
+        # Ensure we have saved the most recent changes to autosave.ini
+        self.write_screen_settings()
+        self.write_window_settings()
+
+        # Get a destination filename
+        filename = QFileDialog.getSaveFileName(self, 'Save Perspective File', 'ui/perspectives/untitled.ini', 'Perspective Files (*.ini)')
+
+        # Copy the autosave.ini file to the new file
+        shutil.copyfile('ui/perspectives/autosave.ini', filename)
 
     def on_action_load_perspective(self):
-        # TODO on_action_load_perspective
-        print("TODO onActionLoadPerspective")
+
+        # Get a source filename
+        filename = QFileDialog.getOpenFileName(self, 'Open Perspective File', 'ui/perspectives', 'Perspective Files (*.ini)')
+        print(filename)
+
+        # Copy the file to overwrite autosave.ini
+        shutil.copyfile(filename, 'ui/perspectives/autosave.ini')
+
+        # Reload settings
+        self.perspective = QSettings('ui/perspectives/autosave.ini', QSettings.IniFormat)
+        self.active_screen = 0
+        self.read_window_settings()
+        self.display_active_screen()
+
 
     def on_action_edit_perspective(self):
 
@@ -367,7 +414,7 @@ class MainWindow(QMainWindow):
             self._routing[i] = []
         for w in self.children():
             if isinstance(w, GCSWidget):
-                if w._track_focused:
+                if w._track_focused and not w.isClosing:
                     if isinstance(self.state.focused_object, MAV) and w.get_datasource_allowed(WidgetDataSource.SINGLE):
                         self._routing[self.state.focused_object.system_id].append(w)
                     elif isinstance(self.state.focused_object, Swarm) and w.get_datasource_allowed(WidgetDataSource.SWARM):
@@ -448,7 +495,7 @@ class MainWindow(QMainWindow):
             except:
                 uuid = QUuid.createUuid().toString()
                 screenname = 'New Screen'
-                iconfilename = 'art/48x48/video-display-3.png'
+                iconfilename = 'art/48x48/toolbar_screen.png'
                 tooltip = ""
                 statustip = ""
                 order = 0
@@ -496,14 +543,21 @@ class MainWindow(QMainWindow):
 
         groupname_screen = 'screen-' + self.screens[self.active_screen].uuid
 
+        # Clear out everything for this screen in the .INI file, which ensures we clear out
+        # any widgets that have been removed in the UI.
+        self.perspective.remove(groupname_screen + '/widgets')
+        self.perspective.remove(groupname_screen + '/widget-positions')
+        self.perspective.remove(groupname_screen + '/state')
+
         # Save which widgets are on the screen, and their object names
         widget_dict = {}
         widget_position_dict = {}
         for w in self.children():
             if isinstance(w, GCSWidget):
-                classname = QString(str(w.__class__.__name__))
-                widget_dict[QString(w.objectName())] = classname
-                widget_position_dict[QString(w.objectName())] = self.dockWidgetArea(w)
+                if not w.isClosing:
+                    classname = QString(str(w.__class__.__name__))
+                    widget_dict[QString(w.objectName())] = classname
+                    widget_position_dict[QString(w.objectName())] = self.dockWidgetArea(w)
         widget_variant = QVariant(widget_dict)
         widget_position_variant = QVariant(widget_position_dict)
 
@@ -559,7 +613,6 @@ class MainWindow(QMainWindow):
                         newWidget.setObjectName(key)
                         self.addDockWidget(widget_position_dict[key], newWidget)
 
-        # TODO Load widget settings here
         for w in self.children():
             if isinstance(w, GCSWidget):
                 groupname_widget = w.objectName()
@@ -575,9 +628,10 @@ class MainWindow(QMainWindow):
         # we want to keep control of drawing our own toolbars, I delete everything created by
         # restoreState()
         # TODO this accidentally wipes out the widget toolbars as well
-        toolbars = self.findChildren(QToolBar)
-        for toolbar in toolbars:
-            self.removeToolBar(toolbar)
+        #toolbars = self.findChildren(QToolBar)
+        #for toolbar in toolbars:
+        #    self.removeToolBar(toolbar)
+        self.create_menu()
 
     def add_gcs_widget(self, classobject, position):
         """
@@ -646,4 +700,14 @@ class MainWindow(QMainWindow):
 
         # This generates a list of GCSWidget-derived classes
         self.widget_library = GCSWidget.__subclasses__()
+
+    def on_widget_closed(self):
+        print("on_widget_closed")
+        # Rebuild the mavlink routing dictionary so this widget can get updates
+        self.build_routing_dictionary()
+        print('a')
+        # Update the perpsective .INI file to include the new widget
+        self.write_screen_settings()
+        print('b')
+
 
