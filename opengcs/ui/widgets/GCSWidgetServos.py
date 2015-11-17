@@ -7,22 +7,7 @@ import sys
 from pymavlink import mavutil
 
 
-# Nee
-# Access parameters for focused MAV with self.focused_object.mav_param['RC5_MIN']
-#Add column showing current PWM output value for each servo channel
-#get this by watching for SERVO_OUTPUT_RAW messages in the widget's process process_messages() method
-#Wire buttons to empty methods
-#Need to compare current value of the servo to RCn_Max and change the color based on how close it is to the RC_Min/Max value
-#Override __init(), call superconstructor
-#override refresh(), call super constructor first line, called when data source changes, widget.self.datasource contains the current datasource object
-#override read_settings() and write_settings(), call supersonctructor in first line
-# saves/restore persistent values between user settings
 
-
-# Currently working on adding toolbar items - tracking certain mavs, settings
-# Need to implement process_messages() - see HUD
-# Need to handle swarms
-#Think about possible way to better handle message forwarding
 
 class GCSWidgetServos (GCSWidget):
 
@@ -36,8 +21,8 @@ class GCSWidgetServos (GCSWidget):
 
 
 
-        self.numServos = 7
-        self.offset = 5
+        self.numServos = 2
+        self.offset = 2
         self.servoList = {}
         self.init_ui()
 
@@ -74,16 +59,18 @@ class GCSWidgetServos (GCSWidget):
 
         super(GCSWidgetServos, self).refresh()
 
+        if self.servoList:
+            self.servoList.clear()
+
         mylayout = QWidget()
         servo_grid = QGridLayout()
         servo_grid.setMenuBar(self.toolbar)
         mylayout.setLayout(servo_grid)
         self.setWidget(mylayout)
-        self.numServos = 7
         #TODO ^^ figure out why I have to set that in the function
 
 
-        for servo_num in range (0,self.numServos):
+        for servo_num in range (self.offset, self.numServos+self.offset):
 
             new_servo = MAVServo(servo_num, self)
             try:
@@ -127,12 +114,12 @@ class GCSWidgetServos (GCSWidget):
 
     def read_settings(self, settings):
         print("Reading settings")
-        self.numServos = settings.value('num_servos')
+        #self.numServos = settings.value('num_servos')
         #TODO read_settings
 
     def write_settings(self, settings):
         print("Writing settings")
-        settings.setValue('num_servos', self.numServos)
+        #settings.setValue('num_servos', self.numServos)
         #TODO write_settings
 
 
@@ -142,6 +129,8 @@ class GCSWidgetServos (GCSWidget):
 
         print("Setting Servo: %d, to value: %d" % (servo, value))
 
+# Gets called by MainWindow.forward_packets_to_widgets through self.state.mav_network.on_mavlink_packet dictionary
+# This widget is added based on self.state.focused object sys id
     def process_messages(self, m):
 
         mtype = m.get_type()
@@ -192,7 +181,7 @@ class MAVServo(QLabel):
     def __init__(self, servo_number, parent):
 
         super(MAVServo, self).__init__()
-        self.setText(QString.number(servo_number+parent.offset))
+        self.setText(QString.number(servo_number))
         self.setAlignment(Qt.AlignCenter)
         self.setStyleSheet('color: green')
 
@@ -209,7 +198,7 @@ class MAVServo(QLabel):
         if value is not None:
             self.currentValue = value
 
-        if not self.hasData & self.currentValue is not None:
+        if not self.hasData and self.currentValue is not None:
             self.hasData = True
 
         if self.hasData:
@@ -224,7 +213,7 @@ class MAVServo(QLabel):
                     return
                 self.setStyleSheet('color:yellow')
         else:
-            print("No Mav, not updating, but I'm talking for servo: %d" % (self.servoNUM+5))
+            print("No Mav, not updating, but I'm talking for servo: %d" % (self.servoNUM))
 
 
 
