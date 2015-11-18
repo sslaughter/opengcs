@@ -1,7 +1,6 @@
 # TODO: figure out appropriate times to rebuild routing table
 # TODO: catch when widgets change their datasource
 # TODO: support screen ordering
-# TODO: fix disappearing toolbars for widgets
 
 # Notes
 #
@@ -78,18 +77,23 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.state.config.settings['windowtitle'])
         self.setWindowIcon(QIcon(gcsfile(self.state.config.settings['windowicon'])))
         self.active_screen = 0
-        self.refresh()
-
-    def refresh(self):
 
         self.read_window_settings()
         self.create_actions()
+        self.create_toolbar()
+        self.create_menu()
+        self.create_statusbar()
         self.display_active_screen()
+
+    def refresh(self):
+
+        print('MainWindow.refresh()')
 
     def display_active_screen(self):
         """
         Display the widgets for the active screen.
         """
+        print('MainWindow.display_active_screen()')
         # Erase all widgets on screen
         for w in self.children():
             if isinstance(w,QDockWidget):
@@ -97,9 +101,7 @@ class MainWindow(QMainWindow):
 
         # Load widget/layout info for the current screen
         self.read_screen_settings()
-        self.create_toolbar()
-        self.create_menu()
-        self.create_statusbar()
+        #self.show()
 
         # We have a new set of widgets on screen, so need to rebuild the routing table
         # to forward mavlink packets to these widgets.
@@ -210,9 +212,7 @@ class MainWindow(QMainWindow):
         """
         Create the menu used by the main window
         """
-        print('create_menu')
         self.menubar = QMenuBar(self)
-        self.setMenuBar(self.menubar)
 
         self.menu_file = self.menubar.addMenu('&File')
         self.menu_file.addAction(self.action_settings)
@@ -234,9 +234,11 @@ class MainWindow(QMainWindow):
         self.menu_mav = self.menubar.addMenu('&MAV')
         self.menu_mav.addAction(self.action_connections)
 
-        #self.show()
+        #self.menubar.setNativeMenuBar(False)
+        self.setMenuBar(self.menubar)
 
     def on_action_view_fullscreen(self):
+
         if self.action_view_fullscreen.isChecked():
             self.showFullScreen()
         else:
@@ -292,7 +294,7 @@ class MainWindow(QMainWindow):
 
         # Get a source filename
         filename = QFileDialog.getOpenFileName(self, 'Open Perspective File', 'ui/perspectives', 'Perspective Files (*.ini)')
-        print(filename)
+        #print(filename)
 
         # Copy the file to overwrite autosave.ini
         shutil.copyfile(filename, 'ui/perspectives/autosave.ini')
@@ -352,7 +354,15 @@ class MainWindow(QMainWindow):
         # TODO support sorting of focused MAV combo box. Sort keys?
         self.combo_focused_mav.blockSignals(True)
         self.combo_focused_mav.clear()
-        print("main_window.catch_network_changed")
+
+        # Add all swarms to the focus combobox
+        for swarm in self.state.mav_network.swarms:
+            v = QVariant(swarm)
+            self.combo_focused_mav.addItem(swarm.name, v)
+            if swarm == self.state.focused_object:
+                self.combo_focused_mav.setCurrentIndex(self.combo_focused_mav.count()-1)
+
+        # Add all MAVs to the focus combobox
         for mavkey in self.state.mav_network.mavs:
             mav = self.state.mav_network.mavs[mavkey]
             v = QVariant(mav)
@@ -631,7 +641,8 @@ class MainWindow(QMainWindow):
         #toolbars = self.findChildren(QToolBar)
         #for toolbar in toolbars:
         #    self.removeToolBar(toolbar)
-        self.create_menu()
+        #self.create_menu()
+        #self.refresh()
 
     def add_gcs_widget(self, classobject, position):
         """
