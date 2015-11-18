@@ -7,7 +7,7 @@ import sys
 from pymavlink import mavutil
 
 
-
+#Need to handle swarms
 
 class GCSWidgetServos (GCSWidget):
 
@@ -59,25 +59,36 @@ class GCSWidgetServos (GCSWidget):
 
         super(GCSWidgetServos, self).refresh()
 
-        if self.servoList:
-            self.servoList.clear()
+
+        if self.get_datasource() == WidgetDataSource.SINGLE:
+            if self.servoList:
+                self.servoList.clear()
+        if self.get_datasource() == WidgetDataSource.SWARM:
+            print ("Working")
 
         mylayout = QWidget()
         servo_grid = QGridLayout()
         servo_grid.setMenuBar(self.toolbar)
         mylayout.setLayout(servo_grid)
         self.setWidget(mylayout)
-        #TODO ^^ figure out why I have to set that in the function
 
 
         for servo_num in range (self.offset, self.numServos+self.offset):
 
             new_servo = MAVServo(servo_num, self)
             try:
-                self.state.focused_object.mav_param
-                new_servo.hasData = True
-                new_servo.maxValue = self.state.focused_object.mav_param['RC%d_MAX' % (servo_num+self.offset)]
-                new_servo.minValue = self.state.focused_object.mav_param['RC%d_MAX' % (servo_num+self.offset)]
+                if self.get_datasource() == WidgetDataSource.SINGLE:
+
+                    self.state.focused_object.mav_param
+                    new_servo.hasData = True
+                    new_servo.maxValue = self.state.focused_object.mav_param['RC%d_MAX' % (servo_num+self.offset)]
+                    new_servo.minValue = self.state.focused_object.mav_param['RC%d_MAX' % (servo_num+self.offset)]
+                elif self.get_datasource() == WidgetDataSource.SWARM:
+                    print ("working")
+                    # Need to figure out what a SWARM object is
+                    #self.state.focused_object.
+                else:
+                    print ("Workign")
 
             except:
                 new_servo.hasData = False
@@ -108,6 +119,7 @@ class GCSWidgetServos (GCSWidget):
             servo_grid.addWidget(servo_Current, servo_num, 3)
 
             self.servoList[servo_num] = new_servo
+
 
 
 
@@ -178,7 +190,7 @@ class GCSWidgetServos (GCSWidget):
 
 class MAVServo(QLabel):
 
-    def __init__(self, servo_number, parent):
+    def __init__(self, servo_number):
 
         super(MAVServo, self).__init__()
         self.setText(QString.number(servo_number))
@@ -216,6 +228,25 @@ class MAVServo(QLabel):
             print("No Mav, not updating, but I'm talking for servo: %d" % (self.servoNUM))
 
 
+class SWARMServo(QLabel):
+
+    def __init__(self, Swarm):
+
+        super(MAVServo, self).__init__()
+        self.setText(QString.number(servo_number))
+        self.setAlignment(Qt.AlignCenter)
+        self.setStyleSheet('color: green')
+
+        #Need to assign a SWARM object, likely won't need individual max/min lists
+        #Does the swarm object have individual mavs saved, are their parameters accessible?
+        #yes, it contains a list of Mav objects
+        self.hasData = False
+        self.maxValue = []
+        self.minValue = []
+
+        # Need to iterate over all servos in each mav
+        for mav in Swarm.mavs:
+            self.maxValue[mav] = Swarm.mavs[mav].mav_param
 
 
 
