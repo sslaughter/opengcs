@@ -21,8 +21,8 @@ class GCSWidgetServos (GCSWidget):
 
 
 
-        self.numServos = 2
-        self.offset = 2
+        self.numServos = 7
+        self.offset = 5
         self.servoList = {}
         self.init_ui()
 
@@ -30,7 +30,7 @@ class GCSWidgetServos (GCSWidget):
 
         self.toolbar = QToolBar()
         self.toolbar.setIconSize(QSize(16,16))
-
+        '''
         self.action_focus_track = QAction('&Track     Main', self)
         self.action_focus_track.setStatusTip('Track Independent')
         self.action_focus_track.setToolTip('Toggle tracking main object')
@@ -38,7 +38,7 @@ class GCSWidgetServos (GCSWidget):
         self.action_focus_track.triggered.connect(self.on_action_focus_track)
 
 
-        '''
+
         self.action_filter = QAction(QIcon(gcsfile('art/16x16/filter.png')), '&Filter', self)
         self.action_filter.setStatusTip('Filter messages by type')
         self.action_filter.setToolTip('Filter messages by type')
@@ -49,8 +49,9 @@ class GCSWidgetServos (GCSWidget):
         self.action_settings.setToolTip('Edit widget settings')
         self.action_settings.triggered.connect(self.on_button_settings)
         '''
+
         self.toolbar.addSeparator()
-        self.toolbar.addAction(self.action_focus_track)
+#        self.toolbar.addAction(self.action_focus_track)
         self.setWindowTitle("Mav Servos")
         self.refresh()
 
@@ -75,7 +76,7 @@ class GCSWidgetServos (GCSWidget):
 
         for servo_num in range (self.offset, self.numServos+self.offset):
 
-            new_servo = MAVServo(servo_num, self)
+            new_servo = MAVServo(servo_num)
             try:
                 if self.get_datasource() == WidgetDataSource.SINGLE:
 
