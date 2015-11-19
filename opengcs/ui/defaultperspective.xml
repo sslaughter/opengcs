@@ -5,7 +5,7 @@
         <icon>art/48x48/video-display-3.png</icon>
         <tooltip>Switch to screen 1</tooltip>
         <widget>
-            <type>GCSWidgetMAVNetwork</type>
+            <type>GCSWidgetServos</type>
             <name>MAV Network</name>
             <location>left</location>
         </widget>

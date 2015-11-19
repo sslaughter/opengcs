@@ -6,9 +6,6 @@ import functools
 import sys
 from pymavlink import mavutil
 
-
-#Need to handle swarms
-
 class GCSWidgetServos (GCSWidget):
 
     widget_name_plaintext = "Servos"
@@ -114,15 +111,15 @@ class GCSWidgetServos (GCSWidget):
 
 
             servo_grid.addWidget(servo_Min, servo_num, 1)
+
+
+
             servo_grid.addWidget(servo_Max, servo_num, 2)
 
             servo_Current = QLabel("Waiting", self)
             servo_grid.addWidget(servo_Current, servo_num, 3)
 
             self.servoList[servo_num] = new_servo
-
-
-
 
 
     def read_settings(self, settings):
@@ -136,11 +133,8 @@ class GCSWidgetServos (GCSWidget):
         #TODO write_settings
 
 
-    def set_Servo(self, servo, value):
-
-        # set servo value
-
-        print("Setting Servo: %d, to value: %d" % (servo, value))
+       # self.refresh()
+        #self.show()
 
 # Gets called by MainWindow.forward_packets_to_widgets through self.state.mav_network.on_mavlink_packet dictionary
 # This widget is added based on self.state.focused object sys id
@@ -168,12 +162,6 @@ class GCSWidgetServos (GCSWidget):
                 pass
         else:
             pass
-
-
-
-
-
-
 
 
     def on_action_focus_track(self):
@@ -248,7 +236,5 @@ class SWARMServo(QLabel):
         # Need to iterate over all servos in each mav
         for mav in Swarm.mavs:
             self.maxValue[mav] = Swarm.mavs[mav].mav_param
-
-
 
 
