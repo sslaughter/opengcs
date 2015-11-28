@@ -9,6 +9,7 @@ from PyQt4 import QtCore
 from PyQt4.QtCore import *
 import sys
 
+<<<<<<< HEAD
 
 class GCSWidgetServos (GCSWidget):
 
@@ -55,6 +56,24 @@ class GCSWidgetServos (GCSWidget):
                 servo_Min = QPushButton("Set Low: NO MAV!")
 
             servo_grid.addWidget(servo_Min, servo_num, 1)
+=======
+# Nee
+# Access parameters for focused MAV with self.focused_object.mav_param['RC5_MIN']
+#Add column showing current PWM output value for each servo channel
+#get this by watching for SERVO_OUTPUT_RAW messages in the widget's process process_messages() method
+#Wire buttons to empty methods
+#Need to compare current value of the servo to RCn_Max and change the color based on how close it is to the RC_Min/Max value
+#Override __init(), call superconstructor
+#override refresh(), call super constructor first line, called when data source changes, widget.self.datasource contains the current datasource object
+#override read_settings() and write_settings(), call supersonctructor in first line
+# saves/restore persistent values between user settings
+
+
+# Currently working on adding toolbar items - tracking certain mavs, settings
+# Need to implement process_messages() - see HUD
+# Need to handle swarms
+#Think about possible way to better handle message forwarding
+>>>>>>> Initial attempt at process_messages() implementation, incomplete toolbar addition
 
             try:
                 self.state.focused_object.mav_param
@@ -78,12 +97,15 @@ class GCSWidgetServos (GCSWidget):
         super(GCSWidgetServos, self).__init__(state, parent)
         self.setObjectName("GCSWidgetServos")
         self.setWindowTitle("Servos")
-        self.set_datasource(True)
         self.set_datasource_allowable(WidgetDataSource.SINGLE | WidgetDataSource.SWARM)
+
+
+
         self.numServos = 7
         self.offset = 5
         self.servoList = {}
         self.init_ui()
+<<<<<<< HEAD
 >>>>>>> Moved to MAVServo class implementation
 
 
@@ -100,6 +122,34 @@ class GCSWidgetServos (GCSWidget):
 =======
 =======
 
+=======
+
+    def init_ui(self):
+
+        self.toolbar = QToolBar()
+        self.toolbar.setIconSize(QSize(16,16))
+
+        self.action_focus_track = QAction('&Track     Main', self)
+        self.action_focus_track.setStatusTip('Track Independent')
+        self.action_focus_track.setToolTip('Toggle tracking main object')
+        self.action_focus_track.setCheckable(True)
+        self.action_focus_track.triggered.connect(self.on_action_focus_track)
+
+
+        '''
+        self.action_filter = QAction(QIcon(gcsfile('art/16x16/filter.png')), '&Filter', self)
+        self.action_filter.setStatusTip('Filter messages by type')
+        self.action_filter.setToolTip('Filter messages by type')
+        self.action_filter.triggered.connect(self.on_button_filter)
+
+        self.action_settings = QAction(QIcon(gcsfile('art/16x16/settings.png')), '&Settings', self)
+        self.action_settings.setStatusTip('Edit widget settings')
+        self.action_settings.setToolTip('Edit widget settings')
+        self.action_settings.triggered.connect(self.on_button_settings)
+        '''
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.action_focus_track)
+>>>>>>> Initial attempt at process_messages() implementation, incomplete toolbar addition
         self.setWindowTitle("Mav Servos")
         self.refresh()
 
@@ -112,6 +162,7 @@ class GCSWidgetServos (GCSWidget):
         mylayout = QWidget()
 >>>>>>> Refine grid, add import into mainwindow.py to allow using the servos widget, add to default perspective to make it show up by default
         servo_grid = QGridLayout()
+        servo_grid.setMenuBar(self.toolbar)
         mylayout.setLayout(servo_grid)
         self.setWidget(mylayout)
         self.numServos = 7
@@ -219,6 +270,45 @@ class GCSWidgetServos (GCSWidget):
 =======
 >>>>>>> Moved to MAVServo class implementation
 
+    def process_messages(self, m):
+
+        mtype = m.get_type()
+
+        if mtype == "SERVO_OUTPUT_RAW":
+
+            if m.port == 1:
+                if self.offset <= 8:
+                    for servo_num in range(self.offset, 8):
+                        valueName = "servo{}_raw".format(servo_num)
+                        self.servoList[servo_num-self.offset].update_value(getattr(m, valueName))
+                else:
+                    pass
+            elif m.port == 2:
+                startPoint = 9
+                if self.offset > 8:
+                    startPoint = self.offset
+                for servo_num in range(startPoint, self.numServos+(self.offset-1)):
+                    valueName = "servo{}_raw".format(servo_num - 8)
+                    self.servoList[servo_num-self.offset].update_value(getattr(m, valueName))
+            else:
+                pass
+        else:
+            pass
+
+
+
+
+
+
+
+
+    def on_action_focus_track(self):
+
+        if self.action_focus_track.isChecked():
+            print("Now tracking main MAV")
+        else:
+            print("Now tracking independent MAV")
+
 
 
 #Need to save the max/min value of each servo value, taken from parameters
@@ -244,9 +334,11 @@ class MAVServo(QLabel):
 
     def update_value(self, value):
 
-        if value != None:
+        if value is not None:
             self.currentValue = value
 
+        if not self.hasData & self.currentValue is not None:
+            self.hasData = True
 
         if self.hasData:
             if self.currentValue >= self.maxValue-200:
