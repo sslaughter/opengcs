@@ -1,5 +1,6 @@
 from GCSWidget import *
 from PyQt4.QtGui import *
+<<<<<<< HEAD
 from PyQt4.QtCore import *
 import sys
 from pymavlink import mavutil
@@ -43,6 +44,10 @@ Only needs to affect servo values for a particulare vehicle, doesn't need any kn
 
 """
 
+=======
+
+
+>>>>>>> Initial commit for servos widget file
 
 
 class GCSWidgetServos (GCSWidget):
@@ -53,11 +58,15 @@ class GCSWidgetServos (GCSWidget):
         super(GCSWidgetServos, self).__init__(state, parent)
         self.setObjectName("GCSWidgetServos")
         self.set_datasource_allowable(WidgetDataSource.SINGLE)
+<<<<<<< HEAD
         self.numServos = 7
+=======
+>>>>>>> Initial commit for servos widget file
         self.init_ui()
 
     def init_ui(self):
 
+<<<<<<< HEAD
         mylayout = QWidget()
         servo_grid = QGridLayout()
         #servo_grid.setHorizontalSpacing(1)
@@ -96,10 +105,19 @@ class GCSWidgetServos (GCSWidget):
 
        # self.refresh()
         #self.show()
+=======
+        self.label_altitude = QLabel("0", self)
+        self.label_airspeed = QLabel("0", self)
+        self.label_throttle = QLabel("0", self)
+        self.label_heading = QLabel("0", self)
+        self.label_climbrate = QLabel("0", self)
+        self.refresh()
+>>>>>>> Initial commit for servos widget file
 
     def refresh(self):
 
         super(GCSWidgetServos, self).refresh()
+<<<<<<< HEAD
 
 
     def set_Servo(self, servo, value):
@@ -107,3 +125,16 @@ class GCSWidgetServos (GCSWidget):
         # set servo value
 
         print("Setting Servo: %d, to value: %d" % (servo, value))
+=======
+        w = self.geometry().width()
+        h = self.geometry().height()
+
+        self.label_altitude.move(5, h/2-10)
+        self.label_airspeed.move(w-25, h/2-10)
+        self.label_throttle.move(5, 20)
+        self.label_heading.move(w/2 - 10, 50)
+        self.label_climbrate.move(w-25,20)
+
+        self.setWindowTitle("GCSWidgetServos")
+        self.setMinimumSize(200, 200)
+>>>>>>> Initial commit for servos widget file
