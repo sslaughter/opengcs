@@ -29,6 +29,9 @@ import functools
 import os.path
 from opengcs import *
 
+
+#from PyQt4 import QtCore, QtGui
+import functools
 import gettext
 
 class Screen:
