@@ -44,6 +44,7 @@ class GCSWidgetServos (GCSWidget):
             servo_name.setAlignment(Qt.AlignCenter)
             servo_grid.addWidget(servo_name, servo_num, 0)
 
+<<<<<<< HEAD
             try:
                 self.state.focused_object.mav_param
                 servo_Min = QPushButton("Set Low: %d" % (QString.number(self.state.focused_object.mav_param['RC%d_MIN' % (servo_num+5)])))
@@ -59,6 +60,9 @@ class GCSWidgetServos (GCSWidget):
                 servo_Max.clicked.connect(self.set_Servo(servo_num + 5,self.state.focused_object.mav_param['RC%d_Min' % (servo_num+5)]))
             except:
                 servo_Max = QPushButton("Set High: NO MAV!")
+=======
+class GCSWidgetServos (GCSWidget):
+>>>>>>> Initial commit for servos widget file
 
             servo_grid.addWidget(servo_Max, servo_num, 2)
 
@@ -122,6 +126,7 @@ class GCSWidgetServos (GCSWidget):
         #self.show()
 >>>>>>> Refine grid, add import into mainwindow.py to allow using the servos widget, add to default perspective to make it show up by default
 
+
     def refresh(self):
 
         super(GCSWidgetServos, self).refresh()
@@ -151,4 +156,19 @@ class GCSWidgetServos (GCSWidget):
         # set servo value
 
         print("Setting Servo: %d, to value: %d" % (servo, value))
+<<<<<<< HEAD
 >>>>>>> Initial layout attempt, empty set servo method
+=======
+        w = self.geometry().width()
+        h = self.geometry().height()
+
+        self.label_altitude.move(5, h/2-10)
+        self.label_airspeed.move(w-25, h/2-10)
+        self.label_throttle.move(5, 20)
+        self.label_heading.move(w/2 - 10, 50)
+        self.label_climbrate.move(w-25,20)
+
+        self.setWindowTitle("GCSWidgetServos")
+        self.setMinimumSize(200, 200)
+
+>>>>>>> Initial commit for servos widget file
