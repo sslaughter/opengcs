@@ -4,6 +4,7 @@ from PyQt4.QtCore import *
 from gcs_state import *
 import functools
 import sys
+<<<<<<< HEAD
 from PyQt4 import QtCore
 
 from PyQt4.QtCore import *
@@ -99,6 +100,12 @@ class GCSWidgetServos (GCSWidget):
             servo_Current = QLabel("Waiting", self)
             servo_grid.addWidget(servo_Current, servo_num, 3)
 =======
+=======
+from pymavlink import mavutil
+
+class GCSWidgetServos (GCSWidget):
+
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
     widget_name_plaintext = "Servos"
 
     def __init__(self, state, parent):
@@ -113,6 +120,7 @@ class GCSWidgetServos (GCSWidget):
         self.offset = 5
         self.servoList = {}
         self.init_ui()
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> Moved to MAVServo class implementation
 
@@ -131,6 +139,8 @@ class GCSWidgetServos (GCSWidget):
 =======
 
 =======
+=======
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
 
     def init_ui(self):
 
@@ -158,11 +168,15 @@ class GCSWidgetServos (GCSWidget):
 
         self.toolbar.addSeparator()
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.toolbar.addAction(self.action_focus_track)
 >>>>>>> Initial attempt at process_messages() implementation, incomplete toolbar addition
 =======
 #        self.toolbar.addAction(self.action_focus_track)
 >>>>>>> Small bug fix in class call
+=======
+#        self.toolbar.addAction(self.action_focus_track)
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
         self.setWindowTitle("Mav Servos")
         self.refresh()
 
@@ -173,22 +187,30 @@ class GCSWidgetServos (GCSWidget):
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> Moved to MAVServo class implementation
 =======
         if self.servoList:
             self.servoList.clear()
 =======
+=======
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
 
         if self.get_datasource() == WidgetDataSource.SINGLE:
             if self.servoList:
                 self.servoList.clear()
         if self.get_datasource() == WidgetDataSource.SWARM:
             print ("Working")
+<<<<<<< HEAD
 >>>>>>> Small changes before rebase w/ master
 
 >>>>>>> Small fixes, including to the self.numservos set, error ocurred in write/read settings functions
         mylayout = QWidget()
 >>>>>>> Refine grid, add import into mainwindow.py to allow using the servos widget, add to default perspective to make it show up by default
+=======
+
+        mylayout = QWidget()
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
         servo_grid = QGridLayout()
         servo_grid.setMenuBar(self.toolbar)
         mylayout.setLayout(servo_grid)
@@ -235,6 +257,12 @@ class GCSWidgetServos (GCSWidget):
 
 
             servo_grid.addWidget(servo_Min, servo_num, 1)
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
             servo_grid.addWidget(servo_Max, servo_num, 2)
 
             servo_Current = QLabel("Waiting", self)
@@ -242,6 +270,7 @@ class GCSWidgetServos (GCSWidget):
 
             self.servoList[servo_num] = new_servo
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> Initial layout attempt, empty set servo method
@@ -265,6 +294,9 @@ class GCSWidgetServos (GCSWidget):
 =======
 
 >>>>>>> Small changes before rebase w/ master
+=======
+
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
     def read_settings(self, settings):
         print("Reading settings")
         #self.numServos = settings.value('num_servos')
@@ -274,6 +306,7 @@ class GCSWidgetServos (GCSWidget):
         print("Writing settings")
         #settings.setValue('num_servos', self.numServos)
         #TODO write_settings
+<<<<<<< HEAD
 >>>>>>> Moved to MAVServo class implementation
 
 
@@ -307,6 +340,12 @@ class GCSWidgetServos (GCSWidget):
         h = self.geometry().height()
 =======
 >>>>>>> Moved to MAVServo class implementation
+=======
+
+
+       # self.refresh()
+        #self.show()
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
 
 # Gets called by MainWindow.forward_packets_to_widgets through self.state.mav_network.on_mavlink_packet dictionary
 # This widget is added based on self.state.focused object sys id
@@ -336,12 +375,15 @@ class GCSWidgetServos (GCSWidget):
             pass
 
 
+<<<<<<< HEAD
 
 
 
 
 
 
+=======
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
     def on_action_focus_track(self):
 
         if self.action_focus_track.isChecked():
@@ -416,6 +458,9 @@ class SWARMServo(QLabel):
             self.maxValue[mav] = Swarm.mavs[mav].mav_param
 
 
+<<<<<<< HEAD
 
 
 >>>>>>> Initial commit for servos widget file
+=======
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3

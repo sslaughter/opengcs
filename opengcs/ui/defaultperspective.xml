@@ -6,10 +6,14 @@
         <tooltip>Switch to screen 1</tooltip>
         <widget>
 <<<<<<< HEAD
+<<<<<<< HEAD
             <type>GCSWidgetServos</type>
 =======
             <type>GCSWidgetMAVNetwork</type>
 >>>>>>> Refine grid, add import into mainwindow.py to allow using the servos widget, add to default perspective to make it show up by default
+=======
+            <type>GCSWidgetServos</type>
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
             <name>MAV Network</name>
             <location>left</location>
         </widget>
@@ -30,12 +34,17 @@
         </widget>
         <widget>
 <<<<<<< HEAD
+<<<<<<< HEAD
             <type>GCSWidgetMap</type>
             <name>Map</name>
 =======
             <type>GCSWidgetPlot</type>
             <name>Plot</name>
 >>>>>>> Refine grid, add import into mainwindow.py to allow using the servos widget, add to default perspective to make it show up by default
+=======
+            <type>GCSWidgetPlot</type>
+            <name>Plot</name>
+>>>>>>> 3a2b3e9b0698619c98b611c1443453f7004dd2b3
             <location>center</location>
         </widget>
         <widget>
