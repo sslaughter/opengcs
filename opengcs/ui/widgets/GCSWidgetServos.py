@@ -6,6 +6,16 @@ import functools
 import sys
 from pymavlink import mavutil
 
+#TODO Need to refresh after all parameters are fetched, maybe skip until they're fetched too.
+#MAV data objects have parameter self.param_fetched that tells if the parameters are all fetched, can be checked before initialization
+#TODO Need to figure out where messages for servos 9-16 are...
+#TODO Not reading value for servo 9 in the list
+#TODO implement setValue() function for us setting the servo value, will have to output mavlink message
+#TODO Think about how to handle the swarms and where to make that differentiation
+#TODO Think more about when/why we want to refresh the screen and what needs to happen on a refresh
+
+
+
 class GCSWidgetServos (GCSWidget):
 
     widget_name_plaintext = "Servos"
@@ -54,11 +64,13 @@ class GCSWidgetServos (GCSWidget):
         super(GCSWidgetServos, self).refresh()
 
 
-        if self.get_datasource() == WidgetDataSource.SINGLE:
+        if isinstance(self._datasource, MAV):
             if self.servoList:
                 self.servoList.clear()
-        if self.get_datasource() == WidgetDataSource.SWARM:
+        elif isinstance(self._datasource, Swarm):
             print ("Working")
+        else:
+            print ("No object")
 
         mylayout = QWidget()
         servo_grid = QGridLayout()
@@ -70,22 +82,27 @@ class GCSWidgetServos (GCSWidget):
         for servo_num in range (self.offset, self.numServos+self.offset):
 
             new_servo = MAVServo(servo_num)
-            try:
-                if self.get_datasource() == WidgetDataSource.SINGLE:
 
-                    self.state.focused_object.mav_param
-                    new_servo.hasData = True
-                    new_servo.maxValue = self.state.focused_object.mav_param['RC%d_MAX' % (servo_num+self.offset)]
-                    new_servo.minValue = self.state.focused_object.mav_param['RC%d_MAX' % (servo_num+self.offset)]
-                elif self.get_datasource() == WidgetDataSource.SWARM:
-                    print ("working")
+            # This doesn't work right now
+            if isinstance(self._datasource, MAV):
+                if self._datasource.param_fetched:
+                    try:
+                        new_servo.maxValue = self.state.focused_object.mav_param['RC%d_MAX' % (servo_num)]
+                        new_servo.minValue = self.state.focused_object.mav_param['RC%d_MIN' % (servo_num)]
+                        new_servo.hasData = True
+
+                    except:
+                        print ("Try failed, focused object:")
+                        print self.state.focused_object
+                        new_servo.hasData = False
+                else:
+                    print ("Parameters not yet fetched")
+            elif isinstance(self._datasource, Swarm):
+                print ("working")
                     # Need to figure out what a SWARM object is
                     #self.state.focused_object.
-                else:
-                    print ("Workign")
-
-            except:
-                new_servo.hasData = False
+            else:
+                    print ("No Object")
 
 
             servo_grid.addWidget(new_servo, servo_num, 0)
@@ -112,8 +129,9 @@ class GCSWidgetServos (GCSWidget):
 
             servo_grid.addWidget(servo_Max, servo_num, 2)
 
-            servo_Current = QLabel("Waiting", self)
-            servo_grid.addWidget(servo_Current, servo_num, 3)
+            #Need to add the current Qlabel to the class stuff so I can reference/change it's value
+            new_servo.currentvalueLabel = QLabel("Waiting", self)
+            servo_grid.addWidget(new_servo.currentvalueLabel, servo_num, 3)
 
             self.servoList[servo_num] = new_servo
 
@@ -128,6 +146,9 @@ class GCSWidgetServos (GCSWidget):
         #settings.setValue('num_servos', self.numServos)
         #TODO write_settings
 
+    def check_param_initialized(self):
+        print ("Parameters have been initialized, updating servo information")
+
 
        # self.refresh()
         #self.show()
@@ -135,25 +156,29 @@ class GCSWidgetServos (GCSWidget):
 # Gets called by MainWindow.forward_packets_to_widgets through self.state.mav_network.on_mavlink_packet dictionary
 # This widget is added based on self.state.focused object sys id
     def process_messages(self, m):
-
         mtype = m.get_type()
+        #print mtype
 
         if mtype == "SERVO_OUTPUT_RAW":
-
-            if m.port == 1:
+            if m.port == 0:
+                print ("m.port = 0")
                 if self.offset <= 8:
-                    for servo_num in range(self.offset, 8):
+                    for servo_num in range(self.offset, 9):
                         valueName = "servo{}_raw".format(servo_num)
-                        self.servoList[servo_num-self.offset].update_value(getattr(m, valueName))
+                        self.servoList[servo_num].update_value(getattr(m, valueName))
+                        print valueName
+                        print getattr(m, valueName)
+
                 else:
                     pass
-            elif m.port == 2:
+            elif m.port == 1:
+                print ("m.port = 1")
                 startPoint = 9
                 if self.offset > 8:
                     startPoint = self.offset
                 for servo_num in range(startPoint, self.numServos+(self.offset-1)):
                     valueName = "servo{}_raw".format(servo_num - 8)
-                    self.servoList[servo_num-self.offset].update_value(getattr(m, valueName))
+                    self.servoList[servo_num].update_value(getattr(m, valueName))
             else:
                 pass
         else:
@@ -187,31 +212,39 @@ class MAVServo(QLabel):
         self.maxValue = None
         self.minValue = None
         self.currentValue = None
+        self.currentvalueLabel = QLabel()
 
 
 
     def update_value(self, value):
-
-        if value is not None:
-            self.currentValue = value
-
-        if not self.hasData and self.currentValue is not None:
-            self.hasData = True
+# It breaks here because there is no max value being set
 
         if self.hasData:
-            if self.currentValue >= self.maxValue-200:
-                if self.currentValue >= self.maxValue - 50:
-                    self.setStyleSheet('color: red')
-                    return
-                self.setStyleSheet('color:yellow')
-            elif self.currentValue <= self.minValue+200:
-                if self.currentValue <= self.minValue + 50:
-                    self.setStyleSheet('color: red')
-                    return
-                self.setStyleSheet('color:yellow')
-        else:
-            print("No Mav, not updating, but I'm talking for servo: %d" % (self.servoNUM))
+            if value is not None:
+                self.currentValue = value
+                self.currentvalueLabel.setText("{}".format(value))
 
+            if not self.hasData and self.currentValue is not None:
+                self.hasData = True
+
+            if self.hasData:
+                if self.currentValue >= self.maxValue-200:
+                    if self.currentValue >= self.maxValue - 50:
+                        print self.currentValue
+                        self.setStyleSheet('color: red')
+                        return
+                    self.setStyleSheet('color:yellow')
+                elif self.currentValue <= self.minValue+200:
+                    if self.currentValue <= self.minValue + 50:
+                        self.setStyleSheet('color: red')
+                        return
+                    self.setStyleSheet('color:yellow')
+                else:
+                    self.setStyleSheet('color: green')
+            else:
+                print("No Mav, not updating, but I'm talking for servo: %d" % (self.servoNUM))
+        else:
+            print ("No min/max data, not updating")
 
 class SWARMServo(QLabel):
 
